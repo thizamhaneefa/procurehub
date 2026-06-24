@@ -1,0 +1,11 @@
+node_modules
+.next
+.netlify
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev.db.backup
+public/uploads/*
+!public/uploads/.gitkeep
+.env
+.env.local
+.env*.local

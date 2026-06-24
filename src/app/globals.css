@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { @apply antialiased; }
+  /* Girly theme: soft blush light mode, deep wine dark mode — text stays high-contrast */
+  body { @apply bg-rose-50 text-slate-800 dark:bg-[#1a0712] dark:text-slate-100; }
+}
+
+@layer components {
+  .card { @apply rounded-xl border border-rose-100 bg-white shadow-sm dark:border-pink-950/60 dark:bg-[#241019]; }
+  .input { @apply w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-500/25 dark:border-pink-950/70 dark:bg-[#1f0c16] dark:text-slate-100; }
+  .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-rose-500 dark:text-pink-300/80; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm shadow-pink-500/30 hover:from-pink-600 hover:to-rose-600; }
+  .btn-ghost { @apply btn border border-rose-200 bg-white text-slate-700 hover:bg-rose-50 dark:border-pink-950/70 dark:bg-[#241019] dark:text-slate-200 dark:hover:bg-[#311521]; }
+  .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
+  .th { @apply select-none whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-rose-500 dark:text-pink-300/80; }
+  .td { @apply whitespace-nowrap px-4 py-3 text-sm; }
+}
+
+/* ===== Cursor magic: golden star trail + water-drop click splash ===== */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2147483647;
+  overflow: hidden;
+}
+.fx-star {
+  position: absolute;
+  pointer-events: none;
+  line-height: 1;
+  user-select: none;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 0 6px rgba(252, 211, 77, 0.95), 0 0 16px rgba(245, 158, 11, 0.55);
+  animation: fx-star-fall 0.85s ease-out forwards;
+}
+@keyframes fx-star-fall {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(calc(var(--rot) * 0.3)); }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.15) rotate(var(--rot));
+  }
+}
+.fx-ring {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  border: 2.5px solid rgba(244, 114, 182, 0.8);
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.4), inset 0 0 6px rgba(251, 207, 232, 0.6);
+  transform: translate(-50%, -50%);
+  animation: fx-ring 0.65s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+@keyframes fx-ring {
+  0% { width: 10px; height: 10px; opacity: 1; }
+  100% { width: 64px; height: 64px; opacity: 0; border-width: 1px; }
+}
+.fx-drop {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 55% 55% 70% 70%;
+  background: radial-gradient(circle at 35% 28%, #fce7f3 0%, #f9a8d4 45%, #ec4899 100%);
+  box-shadow: 0 0 4px rgba(244, 114, 182, 0.85);
+  transform: translate(-50%, -50%);
+  animation: fx-drop 0.75s ease-out forwards;
+}
+@keyframes fx-drop {
+  0% { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 26px)) scale(0.45);
+  }
+}
+.fx-wobble {
+  animation: fx-wobble 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+}
+@keyframes fx-wobble {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(0.93, 1.06); }
+  45% { transform: scale(1.07, 0.94); }
+  65% { transform: scale(0.97, 1.03); }
+  82% { transform: scale(1.02, 0.99); }
+  100% { transform: scale(1, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-layer { display: none; }
+  .fx-wobble { animation: none !important; }
+}
+
+/* Printable PO: only show #print-area when printing */
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { position: absolute; inset: 0; width: 100%; padding: 0 !important; }
+  .no-print { display: none !important; }
+}

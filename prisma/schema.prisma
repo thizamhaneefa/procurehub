@@ -1,0 +1,205 @@
+generator client {
+  provider      = "prisma-client-js"
+  // native = local dev; rhel targets = Netlify Functions (AWS Lambda)
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled (Supabase Transaction pooler) — used at runtime
+  directUrl = env("DIRECT_URL")   // direct connection — used for migrations / db push
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  username     String @unique
+  passwordHash String
+  name         String
+}
+
+model Setting {
+  id              Int     @id @default(1)
+  companyName     String  @default("ProcureHub")
+  logoUrl         String?
+  currency        String  @default("AED")
+  address         String?
+  anthropicApiKey String?
+  aiModel         String  @default("claude-opus-4-8")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+}
+
+model Supplier {
+  id             Int             @id @default(autoincrement())
+  name           String
+  contactPerson  String
+  email          String
+  phone          String
+  country        String
+  city           String
+  category       String
+  paymentTerms   String
+  status         String          @default("Active")
+  rating         Int             @default(3)
+  createdAt      DateTime        @default(now())
+  products       Product[]
+  invoices       Invoice[]
+  purchaseOrders PurchaseOrder[]
+  receipts       Receipt[]
+}
+
+model Customer {
+  id              Int      @id @default(autoincrement())
+  name            String
+  email           String   @default("")
+  phone           String   @default("")
+  address         String   @default("")
+  emiratesId      String    @default("")
+  agreementUrl    String?
+  tradeLicenseUrl String?
+  vatRegUrl       String?
+  licenseExpiry   DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+}
+
+model WorkNote {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String?
+  imageUrl  String?
+  status    String    @default("Pending")
+  dueDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model MiscExpense {
+  id           Int      @id @default(autoincrement())
+  description  String
+  category     String   @default("Office Supplies")
+  vendor       String?
+  amount       Float    @default(0)
+  purchaseDate DateTime
+  billUrl      String?
+  notes        String?
+  createdAt    DateTime @default(now())
+}
+
+model Lead {
+  id             Int       @id @default(autoincrement())
+  companyName    String
+  contact        String
+  email          String?
+  phone          String?
+  productOffered String
+  quotedPrice    Float?
+  source         String
+  status         String    @default("New")
+  notes          String?
+  followUpDate   DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+model Product {
+  id                Int             @id @default(autoincrement())
+  sku               String          @unique
+  name              String
+  category          String
+  unit              String
+  supplierId        Int?
+  supplier          Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  unitCost          Float
+  lastPurchasePrice Float
+  stockQty          Int             @default(0)
+  reorderLevel      Int             @default(0)
+  status            String          @default("Active")
+  movements         StockMovement[]
+  poItems           POItem[]
+  receiptItems      ReceiptItem[]
+}
+
+model StockMovement {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type         String
+  date         DateTime @default(now())
+  reference    String
+  quantity     Int
+  balanceAfter Int
+}
+
+model PurchaseOrder {
+  id               Int       @id @default(autoincrement())
+  poNumber         String    @unique
+  supplierId       Int
+  supplier         Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  orderDate        DateTime  @default(now())
+  expectedDelivery DateTime?
+  status           String    @default("Draft")
+  notes            String?
+  items            POItem[]
+  invoices         Invoice[]
+  receipts         Receipt[]
+}
+
+model POItem {
+  id        Int           @id @default(autoincrement())
+  poId      Int
+  po        PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  qty       Int
+  unitPrice Float
+}
+
+model Invoice {
+  id          Int            @id @default(autoincrement())
+  invoiceNo   String         @unique
+  supplierId  Int
+  supplier    Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  poId        Int?
+  po          PurchaseOrder? @relation(fields: [poId], references: [id], onDelete: SetNull)
+  invoiceDate DateTime
+  dueDate     DateTime
+  amount      Float
+  currency    String         @default("AED")
+  status      String         @default("Pending")
+  fileUrl     String?
+  receipts    Receipt[]
+}
+
+model Receipt {
+  id         Int            @id @default(autoincrement())
+  receiptNo  String         @unique
+  date       DateTime
+  supplierId Int
+  supplier   Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  poId       Int?
+  po         PurchaseOrder? @relation(fields: [poId], references: [id], onDelete: SetNull)
+  invoiceId  Int?
+  invoice    Invoice?       @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  receivedBy String
+  fileUrl    String?
+  items      ReceiptItem[]
+}
+
+model ReceiptItem {
+  id        Int     @id @default(autoincrement())
+  receiptId Int
+  receipt   Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  qty       Int
+}
+
+model Activity {
+  id        Int      @id @default(autoincrement())
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+}
