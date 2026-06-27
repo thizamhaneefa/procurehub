@@ -49,6 +49,17 @@ model Supplier {
   invoices       Invoice[]
   purchaseOrders PurchaseOrder[]
   receipts       Receipt[]
+  pricelists     SupplierPricelist[]
+}
+
+model SupplierPricelist {
+  id         Int      @id @default(autoincrement())
+  supplierId Int
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  fileType   String   @default("")
+  createdAt  DateTime @default(now())
 }
 
 model Customer {

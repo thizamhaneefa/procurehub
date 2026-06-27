@@ -35,6 +35,11 @@ export async function uploadFile(buffer, originalName, contentType) {
   return objectPath; // store the path; serve via /api/files
 }
 
+export async function removeFile(objectPath) {
+  if (!objectPath) return;
+  try { await client().storage.from(BUCKET).remove([objectPath]); } catch { /* ignore */ }
+}
+
 export async function downloadFile(objectPath) {
   const { data, error } = await client().storage.from(BUCKET).download(objectPath);
   if (error || !data) return null;

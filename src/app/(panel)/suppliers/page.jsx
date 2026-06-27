@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, UploadCloud } from "lucide-react";
+import { Plus, Pencil, Trash2, UploadCloud, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import DataTable from "@/components/DataTable";
 import Modal from "@/components/Modal";
@@ -10,6 +10,7 @@ import Stars from "@/components/Stars";
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import ImportModal from "@/components/ImportModal";
+import PricelistModal from "@/components/PricelistModal";
 import { useConfirm } from "@/components/PanelShell";
 import { IMPORT_CONFIGS } from "@/lib/importConfigs";
 
@@ -24,6 +25,7 @@ export default function SuppliersPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const [pricelistFor, setPricelistFor] = useState(null);
 
   const load = () => fetch("/api/suppliers").then((r) => r.json()).then(setRows).finally(() => setLoading(false));
   useEffect(() => {
@@ -68,7 +70,22 @@ export default function SuppliersPage() {
     { key: "phone", label: "Phone" },
     { key: "country", label: "Country / City", render: (r) => `${r.country} — ${r.city}` },
     { key: "category", label: "Category" },
-    { key: "paymentTerms", label: "Terms" },
+    {
+      key: "_pricelist", label: "Pricelist", sortable: false, export: false,
+      render: (r) => {
+        const n = r._count?.pricelists ?? 0;
+        return (
+          <button
+            onClick={(e) => { e.stopPropagation(); setPricelistFor(r); }}
+            title="View / upload pricelists"
+            className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-2.5 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 dark:border-pink-950/60 dark:bg-[#241019] dark:text-pink-300 dark:hover:bg-[#311521]"
+          >
+            <FileSpreadsheet size={13} />
+            {n > 0 ? `${n} file${n === 1 ? "" : "s"}` : "Add"}
+          </button>
+        );
+      },
+    },
     { key: "rating", label: "Rating", render: (r) => <Stars value={r.rating} /> },
     { key: "status", label: "Status", render: (r) => <Badge status={r.status} /> },
     {
@@ -124,6 +141,8 @@ export default function SuppliersPage() {
         {...IMPORT_CONFIGS.suppliers}
         onDone={load}
       />
+
+      <PricelistModal supplier={pricelistFor} onClose={() => { setPricelistFor(null); load(); }} />
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal?.mode === "add" ? "Add Supplier" : "Edit Supplier"} wide>
         {modal && (
