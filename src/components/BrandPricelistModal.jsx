@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import Modal from "./Modal";
 import { useConfirm } from "./PanelShell";
 import { fmtDate } from "@/lib/format";
+import { uploadFileDirect } from "@/lib/uploadClient";
 
 const EXCEL_EXT = /\.(xlsx|xls|csv)$/i;
 
@@ -31,11 +32,7 @@ export default function BrandPricelistModal({ brand, onClose }) {
     if (!EXCEL_EXT.test(file.name)) { toast.error("Only Excel files (.xlsx, .xls, .csv) are allowed"); return; }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const up = await fetch("/api/upload", { method: "POST", body: fd });
-      if (!up.ok) throw new Error((await up.json().catch(() => ({}))).error || "Upload failed");
-      const { url } = await up.json();
+      const url = await uploadFileDirect(file);
       const res = await fetch(`/api/brands/${brand.id}/pricelists`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileUrl: url, fileName: file.name, fileType: file.type }),

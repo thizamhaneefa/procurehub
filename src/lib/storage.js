@@ -35,6 +35,24 @@ export async function uploadFile(buffer, originalName, contentType) {
   return objectPath; // store the path; serve via /api/files
 }
 
+// Lets the browser upload straight to Supabase, bypassing the Netlify Function's
+// ~6MB synchronous payload limit that a proxied multipart upload would hit.
+export async function createUploadUrl(originalName) {
+  const safe = String(originalName || "file").replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const objectPath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+  const { data, error } = await client().storage.from(BUCKET).createSignedUploadUrl(objectPath);
+  if (error) throw new Error("Could not create upload URL: " + error.message);
+  return { path: objectPath, signedUrl: data.signedUrl, token: data.token };
+}
+
+// Same idea for downloads: hand the browser a short-lived Supabase URL instead of
+// streaming the file through the function (which hits the same payload limit).
+export async function createSignedDownloadUrl(objectPath, expiresIn = 60) {
+  const { data, error } = await client().storage.from(BUCKET).createSignedUrl(objectPath, expiresIn);
+  if (error || !data) throw new Error("Could not create download URL");
+  return data.signedUrl;
+}
+
 export async function removeFile(objectPath) {
   if (!objectPath) return;
   try { await client().storage.from(BUCKET).remove([objectPath]); } catch { /* ignore */ }

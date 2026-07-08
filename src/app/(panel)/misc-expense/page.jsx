@@ -10,6 +10,7 @@ import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import { useConfirm } from "@/components/PanelShell";
 import { fmtMoney, fmtMoneyShort, fmtDate, toInputDate } from "@/lib/format";
+import { uploadFileDirect } from "@/lib/uploadClient";
 
 const CATEGORIES = ["Office Supplies", "Printing & Stationery", "Cleaning & Hygiene", "Pantry", "Maintenance", "Other"];
 const CAT_COLOR = { "Office Supplies": "blue", "Printing & Stationery": "violet", "Cleaning & Hygiene": "cyan", Pantry: "amber", Maintenance: "gray", Other: "gray" };
@@ -21,12 +22,15 @@ function BillField({ value, onChange }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    setBusy(false);
-    if (res.ok) { const { url } = await res.json(); onChange(url); toast.success("Bill attached"); }
-    else { const d = await res.json().catch(() => ({})); toast.error(d.error || "Upload failed"); }
+    try {
+      const url = await uploadFileDirect(file);
+      onChange(url);
+      toast.success("Bill attached");
+    } catch (err) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setBusy(false);
+    }
   }
   return value ? (
     <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">

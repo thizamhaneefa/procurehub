@@ -9,6 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import { useConfirm } from "@/components/PanelShell";
 import { fmtDate, toInputDate } from "@/lib/format";
+import { uploadFileDirect } from "@/lib/uploadClient";
 
 const EMPTY = { name: "", email: "", phone: "", address: "", emiratesId: "", agreementUrl: null, tradeLicenseUrl: null, vatRegUrl: null, licenseExpiry: "", notes: "" };
 
@@ -41,17 +42,14 @@ function FileField({ label, value, onChange }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    setBusy(false);
-    if (res.ok) {
-      const { url } = await res.json();
+    try {
+      const url = await uploadFileDirect(file);
       onChange(url);
       toast.success(`${label} uploaded`);
-    } else {
-      const d = await res.json().catch(() => ({}));
-      toast.error(d.error || "Upload failed");
+    } catch (err) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setBusy(false);
     }
   }
 

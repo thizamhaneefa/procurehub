@@ -13,6 +13,7 @@ import ImportModal from "@/components/ImportModal";
 import { useConfirm } from "@/components/PanelShell";
 import { IMPORT_CONFIGS } from "@/lib/importConfigs";
 import { fmtMoney, fmtDate, toInputDate } from "@/lib/format";
+import { uploadFileDirect } from "@/lib/uploadClient";
 
 const STATUSES = ["Pending", "Approved", "Paid", "Overdue"];
 const EMPTY = { invoiceNo: "", supplierId: "", poId: "", invoiceDate: "", dueDate: "", amount: "", currency: "AED", status: "Pending", fileUrl: "" };
@@ -39,15 +40,15 @@ export default function InvoicesPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    setUploading(false);
-    if (res.ok) {
-      const { url } = await res.json();
+    try {
+      const url = await uploadFileDirect(file);
       setModal((m) => ({ ...m, form: { ...m.form, fileUrl: url } }));
       toast.success("File attached");
-    } else toast.error("Upload failed");
+    } catch (err) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function save(e) {

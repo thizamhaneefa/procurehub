@@ -4,6 +4,7 @@ import { Trash2, Plus, KeyRound, Building, Tags, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useApp, useConfirm } from "@/components/PanelShell";
 import PageHeader from "@/components/PageHeader";
+import { uploadFileDirect } from "@/lib/uploadClient";
 
 export default function SettingsPage() {
   const { refreshSettings } = useApp();
@@ -67,15 +68,15 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy("logo");
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    setBusy("");
-    if (res.ok) {
-      const { url } = await res.json();
+    try {
+      const url = await uploadFileDirect(file);
       setProfile((p) => ({ ...p, logoUrl: url }));
       toast.success("Logo uploaded — click Save to apply");
-    } else toast.error("Upload failed");
+    } catch (err) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setBusy("");
+    }
   }
 
   async function changePassword(e) {

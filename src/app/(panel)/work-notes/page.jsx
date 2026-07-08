@@ -12,6 +12,7 @@ import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import { useConfirm } from "@/components/PanelShell";
 import { fmtDate, toInputDate, timeAgo } from "@/lib/format";
+import { uploadFileDirect } from "@/lib/uploadClient";
 
 const STATUSES = ["Pending", "In Progress", "Completed"];
 const STATUS_COLOR = { Pending: "amber", "In Progress": "blue", Completed: "green" };
@@ -37,17 +38,15 @@ export default function WorkNotesPage() {
   async function uploadImage(file) {
     if (!file) return;
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file.name ? file : new File([file], "pasted-screenshot.png", { type: file.type || "image/png" }));
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    setUploading(false);
-    if (res.ok) {
-      const { url } = await res.json();
+    const namedFile = file.name ? file : new File([file], "pasted-screenshot.png", { type: file.type || "image/png" });
+    try {
+      const url = await uploadFileDirect(namedFile);
       setModal((m) => (m ? { ...m, form: { ...m.form, imageUrl: url } } : m));
       toast.success("Image attached");
-    } else {
-      const d = await res.json().catch(() => ({}));
-      toast.error(d.error || "Image upload failed");
+    } catch (err) {
+      toast.error(err.message || "Image upload failed");
+    } finally {
+      setUploading(false);
     }
   }
 

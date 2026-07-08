@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import Modal from "./Modal";
 import { useConfirm } from "./PanelShell";
 import { fmtDate } from "@/lib/format";
+import { uploadFileDirect } from "@/lib/uploadClient";
 
 function fileIcon(name = "", size = 26) {
   const n = name.toLowerCase();
@@ -35,11 +36,7 @@ export default function PricelistModal({ supplier, onClose }) {
     if (inputRef.current) inputRef.current.value = "";
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const up = await fetch("/api/upload", { method: "POST", body: fd });
-      if (!up.ok) throw new Error((await up.json().catch(() => ({}))).error || "Upload failed");
-      const { url } = await up.json();
+      const url = await uploadFileDirect(file);
       const res = await fetch(`/api/suppliers/${supplier.id}/pricelists`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileUrl: url, fileName: file.name, fileType: file.type }),

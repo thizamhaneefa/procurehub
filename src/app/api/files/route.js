@@ -1,22 +1,19 @@
 export const dynamic = "force-dynamic";
-import { downloadFile, pathFromUrl } from "@/lib/storage";
+import { createSignedDownloadUrl, pathFromUrl } from "@/lib/storage";
 
-// Auth-gated file proxy: streams a private Supabase Storage object to the
-// logged-in user. Protected by middleware (all /api routes require a session),
-// so customer documents are never publicly accessible.
+// Auth-gated file proxy: protected by middleware (all /api routes require a
+// session), so documents are never publicly accessible. Rather than streaming
+// the file through this Netlify Function (subject to its ~6MB payload limit),
+// it redirects to a short-lived signed Supabase URL so large files still work.
 export async function GET(req) {
   const raw = new URL(req.url).searchParams.get("path");
   const path = pathFromUrl(raw);
   if (!path) return new Response("Not found", { status: 404 });
 
-  const file = await downloadFile(path);
-  if (!file) return new Response("Not found", { status: 404 });
-
-  return new Response(file.buffer, {
-    headers: {
-      "Content-Type": file.contentType,
-      "Content-Disposition": "inline",
-      "Cache-Control": "private, max-age=300",
-    },
-  });
+  try {
+    const signedUrl = await createSignedDownloadUrl(path);
+    return Response.redirect(signedUrl, 302);
+  } catch {
+    return new Response("Not found", { status: 404 });
+  }
 }
