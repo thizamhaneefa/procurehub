@@ -5,12 +5,13 @@ import { useApp } from "./PanelShell";
 import {
   LayoutDashboard, Building2, UserPlus, Package, Boxes,
   ShoppingCart, ReceiptText, ClipboardCheck, BarChart3, Settings, X, Container,
-  LogOut, ChevronsLeft, ChevronsRight, FileSignature, StickyNote, Receipt,
+  LogOut, ChevronsLeft, ChevronsRight, FileSignature, StickyNote, Receipt, FileSpreadsheet,
 } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/suppliers", label: "Suppliers", icon: Building2 },
+  { href: "/pricelist", label: "Pricelist", icon: FileSpreadsheet },
   { href: "/customers", label: "Customer Agreements", icon: FileSignature },
   { href: "/work-notes", label: "Work Notes - Thizam", icon: StickyNote },
   { href: "/misc-expense", label: "Misc Expense", icon: Receipt },

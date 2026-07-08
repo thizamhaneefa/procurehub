@@ -62,6 +62,23 @@ model SupplierPricelist {
   createdAt  DateTime @default(now())
 }
 
+model Brand {
+  id         Int             @id @default(autoincrement())
+  name       String          @unique
+  createdAt  DateTime        @default(now())
+  pricelists BrandPricelist[]
+}
+
+model BrandPricelist {
+  id        Int      @id @default(autoincrement())
+  brandId   Int
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileUrl   String
+  fileType  String   @default("")
+  createdAt DateTime @default(now())
+}
+
 model Customer {
   id              Int      @id @default(autoincrement())
   name            String
